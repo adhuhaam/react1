@@ -1,14 +1,21 @@
-name: React App CI/CD
+name: Deploy React App to GitHub Pages
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -29,8 +36,18 @@ jobs:
         CI: false
         NODE_OPTIONS: --openssl-legacy-provider
 
-    - name: 📦 Upload Production Build
-      uses: actions/upload-artifact@v3
+    - name: 📤 Upload GitHub Pages Artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        name: react-app-build
         path: build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
